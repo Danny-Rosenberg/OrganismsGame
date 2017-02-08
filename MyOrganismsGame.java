@@ -1,4 +1,5 @@
 import java.util.ArrayList;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class MyOrganismsGame implements OrganismsGameInterface {
 	
@@ -35,17 +36,17 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 		this.game = game; //shouldn't this still work with MyGameConfig?
 		this.players = players;
 		//assume more than 2 players
-		//use reflections to create different arrays lists for different implementations of player
-		//Then set values of myPRD, I suppose to treat arraylists of different types differently  
-		//maybe should put this in playGame()...
-		Board board = new Board(10, 10, (MyGameConfig)game, this.p , this.q); //this may be a violation of liskov...
+		this.board = new Board(10, 10, (MyGameConfig)game, this.p , this.q); //this may be a violation of liskov...
+		this.PRD = new ArrayList<PlayerRoundData>();
 		for(Player pro : players){
 			if (pro instanceof HumanPlayer){
 			HumanPlayer hp = (HumanPlayer) pro;	
 			MyPlayerRoundData myPRD = new MyPlayerRoundData();
-			myPRD.setPlayerId(hp.getKey()); //this is what it should look like, but having inheritance problems
-			myPRD.setEnergy(100); //how much food at the start?
+			myPRD.setPlayerId(hp.getKey()); 
+			myPRD.setEnergy(500); //how much food at the start?
 			myPRD.setCount(1);
+//			PlayerRoundData prd = (PlayerRoundData) myPRD;
+			PRD.add(myPRD);
 			}
 		}
 		playGame();
@@ -58,16 +59,33 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 	 */
 	@Override
 	public boolean playGame() { //perhaps put methods in here that will throw excp...Or maybe in Move class
-		int rounds = 500;
+		int rounds = 5;
 		int x = 0; //going through rows
 		int y = 0; //going through columns
 		Cell[][] ph = this.board.getBoard(); //does this 'this' matter here? Ultimately just want one board
+		//setting players randomly on board:
+		for(Player p : getPlayers()){
+			if(p instanceof HumanPlayer){ //@TODO or computer player
+				HumanPlayer hp = (HumanPlayer) p;
+			int r = ThreadLocalRandom.current().nextInt(0, 10);
+			int l = ThreadLocalRandom.current().nextInt(0, 10);
+			if(ph[r][l].getPlayer() == null){
+			    ph[r][l].setPlayer(hp); 
+			}
+			else{
+				ph[5][5].setPlayer(hp);
+			}
+			}
+		}
+		
+		
 		while(rounds > 0){
 			//creating a single round
 			//laying down the food for a round
 			for (x = 0; x < 10; x++){
 				for(y = 0; y < 10; y++){
-					ph[x][y].generateValues();
+					ph[x][y].generateValues(); //check if this is changing the flag
+					ph[x][y].setStatus(); //for printing purposes
 				}
 			}	
 			//feeding organisms and moving them around
@@ -84,7 +102,7 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 						else{
 							//checking for a pulse...
 							if(player.getEnergyLeft() == 0){ 
-								//kill player - maybe remove from arraylist of players - depends how you reproduce
+								currentCell.setPlayer(null);//remove the corpse
 							}
 							spaceCheck(board, x, y);
 							Move move = currentCell.getPlayer().move(foodBubble, playerBubble, 
@@ -101,6 +119,7 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 								currentCell.getPlayer().setEnergyLeft(-MGC.v());
 								try{
 								Player child = currentCell.getPlayer().getClass().newInstance();
+								moveChild(board, x, y, move.childpos());
 								}
 								catch(Exception e){
 									System.out.println("problem creating new instance"); System.exit(0);
@@ -119,13 +138,14 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 				for(y = 0; y < 10; y++){
 					if(currentCell.getPlayer() != null){
 						currentCell.getPlayer().setMoveFlag(false); //resetting the movement flag
+						currentCell.setStatus(); //for printing purposes
 						updatePlayerRoundData(board, x, y);
 					}
 				}
 				
 			}	
 			
-			printBoard();
+			printBoard(board);
 			rounds--;
 		}
 		
@@ -345,11 +365,11 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 		this.round = round;
 	}
 	
-	public void printBoard(){
+	public void printBoard(Board board){
 		int i = 0;
 		int j = 0;
-		Cell[][] ph = board.getBoard(); //@TODO ask about this
-		for (i = 0; i < 10; j++){
+		Cell[][] ph = board.getBoard(); //@TODO ask about this - adding 'this' stopped infinite loop, but no printing
+		for (i = 0; i < 10; i++){
 			for (j = 0; j < 10; j++){
 				System.out.printf("%d", ph[i][j].getStatus()); //".status"
 			}
@@ -502,6 +522,12 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 		return PRD;
 	}
 	
+	/**
+	 * This method iterates through the board at the end of a round to collect data on the players
+	 * @param board
+	 * @param x coordinate
+	 * @param y coordinate
+	 */
 	public void updatePlayerRoundData(Board board, int x, int y){
 		Cell[][] ph = this.board.getBoard();
 		HumanPlayer hp = ph[x][y].getPlayer();
@@ -518,6 +544,9 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 			
 	}
 	
+	/**
+	 * A method for printing the data in player round data. A final scorecard for the game
+	 */
 	public void printResults(){
 		for(PlayerRoundData res : PRD){
 			if (res instanceof MyPlayerRoundData){
@@ -527,6 +556,10 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 			System.out.println(myPRD.getEnergy());
 			}
 		}
+	}
+	
+	public ArrayList<Player> getPlayers(){
+		return players;
 	}
 	
 	

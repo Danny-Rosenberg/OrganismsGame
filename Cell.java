@@ -24,7 +24,7 @@ public class Cell {
 	private boolean foodP; //presence of food
 //	private int xCo; //the coordinates of the cells on the board -- not sure about this
 //	private int yCo; //the coordinates of the cells on the boad -- not sure about this
-	private int status; 
+	private int status; //0 no food no player, 1 player, 2 food
 	private HumanPlayer player; 
 	
 	/**
@@ -47,6 +47,8 @@ public class Cell {
 	 * @param foodP the foodP to set
 	 */
 	public void setFoodP(boolean foodP) {
+		if(getPlayer() == null){
+		}
 		this.foodP = foodP;
 	}
 	
@@ -80,7 +82,7 @@ public class Cell {
 		double hold;
 		if (covered == false && food == 0){ //if there's no food or organisms on the space...
 			if (foodGen() == true){ //see if food spontaneously generates
-				foodP = true;
+				setFoodP(true);
 				food = 1;
 			}
 		}
@@ -168,6 +170,9 @@ public class Cell {
 	 * @param player
 	 */
 	public void setPlayer(HumanPlayer player){
+		if (player != null){
+			status = 1;
+		}
 		this.player = player;
 	}
 	

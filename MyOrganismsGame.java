@@ -8,13 +8,14 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 	private double q; //prob food doubling
 	private ArrayList<Player> players;
 	private GameConfig game; //this should work in place of GameConfig b/c of liskov (?)
-	private MyGameConfig MGC;
+	private MyGameConfig MGC = new MyGameConfig();
 	private MyOrganismsGame MOG;
 	private ArrayList<PlayerRoundData> PRD; //gotta do something with this
 	private Board board;
 	private Cell currentCell; 
-	private int[] playerBubble; //Array that keeps track of which players are around the current cell
-	private boolean[] foodBubble; //keeps track of which surrounding cells have food
+	private int[] playerBubble = {-1, -1, -1, -1, -1}; //Array that keeps track of which players are around the current cell
+	private boolean[] foodBubble = new boolean[5]; //keeps track of which surrounding cells have food
+	private Move move;
 	
 	//need to model death, removing organisms from the board
 	
@@ -41,6 +42,7 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 		for(Player pro : players){
 			if (pro instanceof HumanPlayer){
 			HumanPlayer hp = (HumanPlayer) pro;	
+			hp.setEnergyLeft(500);
 			MyPlayerRoundData myPRD = new MyPlayerRoundData();
 			myPRD.setPlayerId(hp.getKey()); 
 			myPRD.setEnergy(500); //how much food at the start?
@@ -62,7 +64,7 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 		int rounds = 5;
 		int x = 0; //going through rows
 		int y = 0; //going through columns
-		Cell[][] ph = this.board.getBoard(); //does this 'this' matter here? Ultimately just want one board
+		Cell[][] ph = board.getBoard(); //does this 'this' matter here? Ultimately just want one board
 		//setting players randomly on board:
 		for(Player p : getPlayers()){
 			if(p instanceof HumanPlayer){ //@TODO or computer player
@@ -73,7 +75,11 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 			    ph[r][l].setPlayer(hp); 
 			}
 			else{
-				ph[5][5].setPlayer(hp);
+				if(r == 9)
+				ph[r-1][l].setPlayer(hp);
+				else{
+					ph[r+1][l].setPlayer(hp);
+				}
 			}
 			}
 		}
@@ -92,9 +98,13 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 			for (x = 0; x < 10; x++){
 				for(y = 0; y < 10; y++){
 					currentCell = ph[x][y];
-					if(currentCell.getPlayer() != null){ //if there's a player in the cell
+					Player p = currentCell.getPlayer(); //p is always getting null, why...
+					System.out.println("x is " + x);
+					System.out.println("y is " + y );
+					if(p != null){ //if there's a player in the cell
 						//eating
-						HumanPlayer player = currentCell.getPlayer(); //Pointing to same place in memory?
+						if (p instanceof HumanPlayer){ //for the rest of the game...
+							HumanPlayer player = (HumanPlayer) p;
 						if(currentCell.isFoodP()){
 						eat(player);
 						currentCell.foodEaten();
@@ -105,54 +115,68 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 								currentCell.setPlayer(null);//remove the corpse
 							}
 							spaceCheck(board, x, y);
-							Move move = currentCell.getPlayer().move(foodBubble, playerBubble, 
-									currentCell.getFood(), currentCell.getPlayer().getEnergyLeft());
+							Move move = currentCell.getPlayer().move(foodBubble, playerBubble, currentCell.getFood(), 
+									currentCell.getPlayer().getEnergyLeft()); //@TODO null pointer when player found
 							//if there are no babies
 							if(move.childpos == 0){
-								if(move.type == 0){
+								  if(move.type == 0){
 									currentCell.getPlayer().setEnergyLeft(-1); //energy for not moving
-								}
-							currentCell.getPlayer().setEnergyLeft(-MGC.v()); //energy taken even if you make a mistake	
-							movePlayer(board, x, y, move.type()); } //maybe overload method
+								  }
+							currentCell.getPlayer().setEnergyLeft( -MGC.v()); //energy taken even if you make a mistake	
+							movePlayer(board, x, y, move.type()); 
+							} 
 							//There's a baby coming! where to put him?
 							else{
-								currentCell.getPlayer().setEnergyLeft(-MGC.v());
+								currentCell.getPlayer().setEnergyLeft(-MGC.v()); //subtracting energy 
+								currentCell.getPlayer().setEnergyLeft(currentCell.getPlayer().getEnergyLeft() / 2);//pregancy is expensive
 								try{
 								Player child = currentCell.getPlayer().getClass().newInstance();
-								moveChild(board, x, y, move.childpos());
+								moveChild(board, x, y, move.childpos(), child);
 								}
 								catch(Exception e){
 									System.out.println("problem creating new instance"); System.exit(0);
 								}
-//								moveChild(board, x, y, move.childpos(), true); //how to keep player in same place gracefully?
 							}
 							resetBubbles(); //setting all bubbles to default 
 						}						
 							
-					}
+					
 					
 				}
-			}
+					
+			  }
+			
 			//A final iteration to update PlayerRoundData
 			for (x = 0; x < 10; x++){
 				for(y = 0; y < 10; y++){
-					if(currentCell.getPlayer() != null){
-						currentCell.getPlayer().setMoveFlag(false); //resetting the movement flag
+					Player pb = currentCell.getPlayer(); //Pointing to same place in memory? Should be humanplayer?
+					if (pb instanceof HumanPlayer){ //for the rest of the game...
+						HumanPlayer player = (HumanPlayer) pb;
+					if(player != null){
+						player.setMoveFlag(false); //resetting the movement flag
 						currentCell.setStatus(); //for printing purposes
 						updatePlayerRoundData(board, x, y);
 					}
 				}
 				
-			}	
+				
+			}
 			
+			
+			}	
+				}
+				
+		}
 			printBoard(board);
 			rounds--;
+		
 		}
-		
 		printResults();
+		return true;
 		
-		return false;
 	}
+		
+	
 
 	/**
 	 * This method will move players to different cells, and keep them in the same place if move is invalid
@@ -162,7 +186,7 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 	 * @param direction where the player wants to go
 	 */
 	public void movePlayer(Board board, int x, int y, int direction){
-		Cell[][] ph = this.board.getBoard(); //to reduce method chaining
+		Cell[][] ph = this.board.getBoard(); //is this 'this' necessary? to reduce method chaining
 		Player p = ph[x][y].getPlayer(); //careful here with inheritance
 		if (p instanceof HumanPlayer){// || ComputerPlayer){ //when you implement computer player
 			HumanPlayer player = (HumanPlayer) p;
@@ -191,7 +215,7 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 		}
 		//move east
 		if (direction == 2){
-			if (playerBubble[2] == 2){
+			if (playerBubble[2] == 1){
 				ph[x][y].getPlayer().setMoveFlag(true); //you ain't goin nowhere
 			}
 			else{
@@ -204,13 +228,14 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 				else{
 					ph[x][y].setPlayer(null);
 					ph[x+1][y].setPlayer(player); //same thing
+					//should be same as above??
 					ph[x+1][y].getPlayer().setMoveFlag(true);
 				}
 			}
 		}
 		//move north
 		if(direction == 3){
-			if (playerBubble[3] == 3){
+			if (playerBubble[3] == 1){
 				ph[x][y].getPlayer().setMoveFlag(true); //you ain't goin nowhere
 			}
 			else{
@@ -222,14 +247,14 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 				}
 				else{
 					ph[x][y].setPlayer(null);
-					ph[x][y+1].setPlayer(player); //same thing
-					ph[x][y+1].getPlayer().setMoveFlag(true);
+					ph[x][y-1].setPlayer(player); //this made 10...
+					ph[x][y-1].getPlayer().setMoveFlag(true);
 				}
 			}
 		}
 		//move south
 		if(direction == 4){
-			if (playerBubble[4] == 4){
+			if (playerBubble[4] == 1){
 				ph[x][y].getPlayer().setMoveFlag(true); //you ain't goin nowhere
 			}
 			else{
@@ -241,17 +266,17 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 				}
 				else{
 					ph[x][y].setPlayer(null);
-					ph[x][y-1].setPlayer(player); //same thing
-					ph[x][y-1].getPlayer().setMoveFlag(true);
+					ph[x][y+1].setPlayer(player); //same thing
+					ph[x][y+1].getPlayer().setMoveFlag(true);
 				}
 			}
 		}
 		}
 	}
 	
-	public void moveChild(Board board, int x, int y, int direction){
+	public void moveChild(Board board, int x, int y, int direction, Player c){
 		Cell[][] ph = this.board.getBoard(); //to reduce method chaining
-		Player c = ph[x][y].getPlayer(); //careful here with inheritance
+//		Player c = ph[x][y].getPlayer(); //Not actually creating the baby here. Baby lonely. 
 		if (c instanceof HumanPlayer){ // || or computer player
 			HumanPlayer child = (HumanPlayer) c;
 		//move west
@@ -301,8 +326,8 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 					ph[x][9].getPlayer().setMoveFlag(true);
 				}
 				else{
-					ph[x][y+1].setPlayer(child); 
-					ph[x][y+1].getPlayer().setMoveFlag(true);
+					ph[x][y-1].setPlayer(child); 
+					ph[x][y-1].getPlayer().setMoveFlag(true);
 				}
 			}
 		}
@@ -318,8 +343,8 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 					ph[x][0].getPlayer().setMoveFlag(true);
 				}
 				else{
-					ph[x][y-1].setPlayer(child);
-					ph[x][y-1].getPlayer().setMoveFlag(true);
+					ph[x][y+1].setPlayer(child);
+					ph[x][y+1].getPlayer().setMoveFlag(true);
 				}
 			}
 		}
@@ -414,6 +439,7 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 				}
 			}
 		}
+		else{
 		if(ph[x-1][y].getPlayer() != null){
 			setPlayerBubble(1, 1);
 		}
@@ -423,6 +449,7 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 		   if(ph[x-1][y].isFoodP()){
 			  setFoodBubble(1, true);
 		    }
+		}
 		}
 		//check east
 		//check lower east side

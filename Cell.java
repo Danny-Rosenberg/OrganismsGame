@@ -24,7 +24,7 @@ public class Cell {
 	private boolean foodP; //presence of food
 //	private int xCo; //the coordinates of the cells on the board -- not sure about this
 //	private int yCo; //the coordinates of the cells on the boad -- not sure about this
-	private int status; //0 no food no player, 1 player, 2 food
+	private int status; //0 no food no player, 1 food, 2 player
 	private HumanPlayer player; 
 	
 	/**
@@ -79,7 +79,6 @@ public class Cell {
 	 * and see that the organisms get fed
 	 */
 	public void generateValues(){
-		double hold;
 		if (covered == false && food == 0){ //if there's no food or organisms on the space...
 			if (foodGen() == true){ //see if food spontaneously generates
 				setFoodP(true);
@@ -104,9 +103,8 @@ public class Cell {
 	 */
 	public boolean foodGen(){
 		double chance;
-		//something here?
-//		Random rand = new Random();
-		chance = ThreadLocalRandom.current().nextDouble(0, 1); //@TODO test here
+		chance = Math.random();
+//		chance = ThreadLocalRandom.current().nextDouble(0, 1); //@TODO test here
 			if (chance < p){ //chance is something	
 				return true;
 			}
@@ -121,7 +119,7 @@ public class Cell {
 	public boolean foodDouble(){
 		double chance;
 		if(food < MGC.K()){
-		chance = ThreadLocalRandom.current().nextDouble(0, 1);
+		chance = Math.random();
 			if(chance < q){ //chance is something, need something real here
 				return true; //and the food will double in 'generate' values
 			}
@@ -151,7 +149,7 @@ public class Cell {
 		if (covered == false && foodP == true){
 			status = 1;
 		}
-		if(covered == true){
+		if(getPlayer() != null){
 			status = 2;
 		}
 	}

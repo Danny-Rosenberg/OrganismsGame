@@ -75,12 +75,12 @@ public class HumanPlayer implements Player {
 		
 		Move m = null; //lifted from RandomPlayer. Thanks RandomPlayer!
 		
-		System.out.printf("Hi player. You've got %d energy left ", energyleft);
-		System.out.printf("There's %d food left on this square ", foodleft);
-		System.out.printf("There are players in these positions: %s ", Arrays.toString(neighbors));
-		System.out.printf("There is food in these positions: % ", Arrays.toString(food));
+		System.out.printf("Hi player. You've got %d energy left. \n", energyleft);
+		System.out.printf("There's %d food left on this square. \n", foodleft);
+		System.out.printf("There are players in these positions: %s \n", Arrays.toString(neighbors));
+		System.out.printf("There is food in these positions: %s \n", Arrays.toString(food));
 		
-		System.out.println("choose your move:");
+		System.out.println("choose your move: ");
 		Scanner in = new Scanner(System.in);
 		
 		int direction = in.nextInt();
@@ -105,13 +105,13 @@ public class HumanPlayer implements Player {
 			Scanner again = new Scanner(System.in);
 			System.out.println("Call the wet nurse! Which direction will your baby be in?");
 			int baby = again.nextInt();
-			if (baby == 0)
+			if (baby == 1)
 			m = new Move(Constants.REPRODUCE, Constants.WEST, getKey());
-			else if (direction == 1)
-				m = new Move(Constants.REPRODUCE, Constants.EAST, getKey());
 			else if (direction == 2)
-				m = new Move(Constants.REPRODUCE, Constants.NORTH, getKey());
+				m = new Move(Constants.REPRODUCE, Constants.EAST, getKey());
 			else if (direction == 3)
+				m = new Move(Constants.REPRODUCE, Constants.NORTH, getKey());
+			else if (direction == 4)
 				m = new Move(Constants.REPRODUCE, Constants.SOUTH, getKey());
 			else {
 				System.out.println("if you can't type a valid input, you can't have a baby");

@@ -12,7 +12,7 @@ public class HumanPlayer implements Player {
 
 	private int key; //the key/id assigned by the game
 	private static final String NAME = "Danny";
-	private GameConfig game; //can use this data to make decisions
+	private MyGameConfig myGame; //can use this data to make decisions
 	private int energyLeft;
 	private boolean moveFlag; //if false, player has not moved yet this turn, true they have
 	
@@ -52,7 +52,11 @@ public class HumanPlayer implements Player {
 	@Override
 	public void register(GameConfig game, int key) {
 		this.key = key;
-		this.game = game; //can I cast this to MyGameConfig somehow?
+		if (game instanceof MyGameConfig){
+			MyGameConfig myGame = (MyGameConfig) game;
+			this.myGame = myGame;
+		}
+		 //can I cast this to MyGameConfig somehow?
 	}
 
 	@Override

@@ -37,9 +37,10 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 		this.game = game; //shouldn't this still work with MyGameConfig?
 		this.players = players;
 		//assume more than 2 players
+		//might need to do instanceof for myGameConfig
 		this.board = new Board(10, 10, (MyGameConfig)game, this.p , this.q); //this may be a violation of liskov...
 		this.PRD = new ArrayList<PlayerRoundData>();
-		for(Player pro : players){
+		for(Player pro : players){ //can't do this apparently, need to have a wrapper class that keeps track of the players position
 			if (pro instanceof HumanPlayer){
 			HumanPlayer hp = (HumanPlayer) pro;	
 			hp.setEnergyLeft(500);
@@ -95,12 +96,10 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 				}
 			}	
 			//feeding organisms and moving them around
-			for (x = 0; x < 10; x++){
-				for(y = 0; y < 10; y++){
+			for (y = 0; y < 10; y++){
+				for(x = 0; x < 10; x++){
 					currentCell = ph[x][y];
-					Player p = currentCell.getPlayer(); //p is always getting null, why...
-					System.out.println("x is " + x);
-					System.out.println("y is " + y );
+					Player p = currentCell.getPlayer(); //p is always getting null, why? Why does this work?
 					if(p != null){ //if there's a player in the cell
 						//eating
 						if (p instanceof HumanPlayer){ //for the rest of the game...
@@ -114,7 +113,7 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 							if(player.getEnergyLeft() == 0){ 
 								currentCell.setPlayer(null);//remove the corpse
 							}
-							spaceCheck(board, x, y);
+							spaceCheck(board, y, x); //just switched 
 							Move move = currentCell.getPlayer().move(foodBubble, playerBubble, currentCell.getFood(), 
 									currentCell.getPlayer().getEnergyLeft()); //@TODO null pointer when player found
 							//if there are no babies
@@ -130,8 +129,21 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 								currentCell.getPlayer().setEnergyLeft(-MGC.v()); //subtracting energy 
 								currentCell.getPlayer().setEnergyLeft(currentCell.getPlayer().getEnergyLeft() / 2);//pregancy is expensive
 								try{
-								Player child = currentCell.getPlayer().getClass().newInstance();
-								moveChild(board, x, y, move.childpos(), child);
+								Player c = currentCell.getPlayer().getClass().newInstance(); //or HumanPlayer?
+								if( c instanceof HumanPlayer){
+									HumanPlayer child = (HumanPlayer) c;
+									child.setEnergyLeft(currentCell.getPlayer().getEnergyLeft());
+									child.register(game, currentCell.getPlayer().getKey());
+									moveChild(board, x, y, move.childpos(), child);
+								}
+//								if (c instance of ComputerPlayer){ When you create ComputerPlayer
+//									ComputerPLayer child = (ComputerPlayer) c;
+//									child.setEnergyLeft(currentCell.getPlayer().getEnergyLeft());
+//									child.register(game, currentCell.getPlayer().getKey());
+//									moveChild(board, x, y, move.childpos(), child);
+//									
+//								}
+									//but need to set values for child
 								}
 								catch(Exception e){
 									System.out.println("problem creating new instance"); System.exit(0);
@@ -139,32 +151,29 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 							}
 							resetBubbles(); //setting all bubbles to default 
 						}						
-							
-					
 					
 				}
 					
 			  }
-			
+			// MyPlayerRoundData prd = new MyPlayerRoundData();
 			//A final iteration to update PlayerRoundData
-			for (x = 0; x < 10; x++){
-				for(y = 0; y < 10; y++){
+					int n = 0;
+					int m = 0;
+			  for (m = 0; m < 10; m++){
+				 for(n = 0; n < 10; n++){
 					Player pb = currentCell.getPlayer(); //Pointing to same place in memory? Should be humanplayer?
 					if (pb instanceof HumanPlayer){ //for the rest of the game...
 						HumanPlayer player = (HumanPlayer) pb;
 					if(player != null){
 						player.setMoveFlag(false); //resetting the movement flag
 						currentCell.setStatus(); //for printing purposes
-						updatePlayerRoundData(board, x, y);
+						updatePlayerRoundData(board, n, m);
 					}
-				}
-				
-				
-			}
-			
-			
-			}	
-				}
+				    }	
+				   }
+			   }	
+			  
+				 }
 				
 		}
 			printBoard(board);
@@ -557,17 +566,33 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 	 */
 	public void updatePlayerRoundData(Board board, int x, int y){
 		Cell[][] ph = this.board.getBoard();
-		HumanPlayer hp = ph[x][y].getPlayer();
-		//get the player round data corresponding to the player
-		int id = hp.getKey();
-		for(PlayerRoundData my : PRD){
-			if(id == my.getPlayerId()){
-				MyPlayerRoundData myPRD = (MyPlayerRoundData) my;  //inheritance!!!
-				myPRD.setCount(1); //Inheritance!
-				myPRD.setEnergy(hp.getEnergyLeft()); //Inheritance!
+		Player p = ph[x][y].getPlayer();
+		if (p instanceof HumanPlayer){
+			HumanPlayer gp = (HumanPlayer) p;
+			int id = gp.getKey();
+			for(PlayerRoundData my : PRD){
+				if(id == my.getPlayerId()){
+					MyPlayerRoundData myPRD = (MyPlayerRoundData) my;  //inheritance!!!
+					myPRD.setCount(1); //Inheritance!
+					myPRD.setEnergy(gp.getEnergyLeft()); //Inheritance!
+				}
+				//else, some kind of exception
 			}
-			//else, some kind of exception
 		}
+//		if (p instanceof ComputerPlayer){ //when you have ComputerPlayer
+//			ComputerPlayer gp = (ComputerPlayer) p;
+//			int id = gp.getKey();
+//			for(PlayerRoundData my : PRD){
+//				if(id == my.getPlayerId()){
+//					MyPlayerRoundData myPRD = (MyPlayerRoundData) my;  //inheritance!!!
+//					myPRD.setCount(1); //Inheritance!
+//					myPRD.setEnergy(gp.getEnergyLeft()); //Inheritance!
+//				}
+//				//else, some kind of exception
+//			}
+//		}
+		//get the player round data corresponding to the player
+		
 			
 	}
 	
@@ -575,15 +600,15 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 	 * A method for printing the data in player round data. A final scorecard for the game
 	 */
 	public void printResults(){
-		for(PlayerRoundData res : PRD){
-			if (res instanceof MyPlayerRoundData){
-				MyPlayerRoundData myPRD = (MyPlayerRoundData) res;
+		for(PlayerRoundData myPRD : PRD){
+//			if (res instanceof MyPlayerRoundData){
+//				MyPlayerRoundData myPRD = (MyPlayerRoundData) res;
 			System.out.println("for player number: " + myPRD.getPlayerId());
 			System.out.println(myPRD.getCount());
 			System.out.println(myPRD.getEnergy());
 			}
 		}
-	}
+	
 	
 	public ArrayList<Player> getPlayers(){
 		return players;

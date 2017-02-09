@@ -6,7 +6,8 @@ import java.util.ArrayList;
  *
  */
 public class Main {
-
+//need to make a wrapper class 'organism' or something similar that will hold the state of the organism,
+//move all those methods into the wrapper class
 	public static void main(String[] args) {
 		MyGameConfig mgc = new MyGameConfig();
 		HumanPlayer Danny = new HumanPlayer();

@@ -25,7 +25,8 @@ public class Cell {
 //	private int xCo; //the coordinates of the cells on the board -- not sure about this
 //	private int yCo; //the coordinates of the cells on the boad -- not sure about this
 	private int status; //0 no food no player, 1 food, 2 player
-	private HumanPlayer player; 
+//	private HumanPlayer player; 
+	private Organism organism; //this will do the same thing as Player
 	
 	/**
 	 * @return the food
@@ -47,7 +48,7 @@ public class Cell {
 	 * @param foodP the foodP to set
 	 */
 	public void setFoodP(boolean foodP) {
-		if(getPlayer() == null){
+		if(getOrganism() == null){
 		}
 		this.foodP = foodP;
 	}
@@ -143,13 +144,13 @@ public class Cell {
 	}
 	
 	public void setStatus(){
-		if (covered == false && foodP == false){
+		if (getOrganism() == null && foodP == false){
 			status = 0;
 		}
-		if (covered == false && foodP == true){
+		if (getOrganism() == null && foodP == true){
 			status = 1;
 		}
-		if(getPlayer() != null){
+		if(getOrganism() != null){
 			status = 2;
 		}
 	}
@@ -159,19 +160,27 @@ public class Cell {
 	 * Getter method for Player		
 	 * @return player object
 	 */
-	public HumanPlayer getPlayer(){
-		return player;
+	public Organism getOrganism(){
+		return organism;
 	}
 	
 	/**
 	 * Setter method for player on the cell
-	 * @param player
+	 * @param organism
 	 */
-	public void setPlayer(HumanPlayer player){
-		if (player != null){
+	public void setOrganism(Organism organism){
+		if (organism != null){
 			status = 1;
 		}
-		this.player = player;
+		this.organism = organism;
+	}
+	
+	/**
+	 * Setter to update whether cell is covered or not
+	 * @param cov
+	 */
+	public void setCovered(boolean cov){
+		covered = cov;
 	}
 	
 	

@@ -7,6 +7,9 @@ import java.util.Arrays;
  */
 public class ComputerPlayer implements Player {
 		
+	private static final String NAME = "compy";
+	private int key;
+	private MyGameConfig myGame;
 	
 	@Override
 	public void register(GameConfig game, int key) {
@@ -26,13 +29,16 @@ public class ComputerPlayer implements Player {
 	@Override
 	public Move move(boolean[] food, int[] neighbors, int foodleft, int energyleft) {
 		Move m = null;
+		int direction = 0;
 		
 		if(energyleft > 100 && energyleft < 150){
 			if(Arrays.asList(neighbors).contains(-1)){
-				for()
-				int step = 
+//				for()
+//				int step = 
 			}
-			move()
+			
+			m = new Move(direction);
+			
 		}
 		
 		

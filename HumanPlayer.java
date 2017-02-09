@@ -10,41 +10,10 @@ import java.util.Scanner;
  */
 public class HumanPlayer implements Player {
 
-	private int key; //the key/id assigned by the game
 	private static final String NAME = "Danny";
-	private MyGameConfig myGame; //can use this data to make decisions
-	private int energyLeft;
-	private boolean moveFlag; //if false, player has not moved yet this turn, true they have
+	private MyGameConfig myGame;
+	private int key;
 	
-	
-	/**
-	 * @return the moveFlag
-	 */
-	public boolean isMoveFlag() {
-		return moveFlag;
-	}
-
-	/**
-	 * @param moveFlag the moveFlag to set
-	 */
-	public void setMoveFlag(boolean moveFlag) {
-		this.moveFlag = moveFlag;
-	}
-
-	/**
-	 * @return the energyLeft
-	 */
-	public int getEnergyLeft() {
-		return energyLeft;
-	}
-
-	/**
-	 * @param energyLeft the energyLeft to set
-	 */
-	public void setEnergyLeft(int change) {
-		energyLeft += change;
-	}
-
 	/**
 	 * This is the registration method. The game object is passed, so we know 
 	 * the parameters of the round
@@ -110,13 +79,13 @@ public class HumanPlayer implements Player {
 			System.out.println("Call the wet nurse! Which direction will your baby be in?");
 			int baby = again.nextInt();
 			if (baby == 1)
-			m = new Move(Constants.REPRODUCE, Constants.WEST, getKey());
+			m = new Move(Constants.REPRODUCE, 1, key);
 			else if (direction == 2)
-				m = new Move(Constants.REPRODUCE, Constants.EAST, getKey());
+				m = new Move(Constants.REPRODUCE, 2, key);
 			else if (direction == 3)
-				m = new Move(Constants.REPRODUCE, Constants.NORTH, getKey());
+				m = new Move(Constants.REPRODUCE, 3, key);
 			else if (direction == 4)
-				m = new Move(Constants.REPRODUCE, Constants.SOUTH, getKey());
+				m = new Move(Constants.REPRODUCE, 4, key);
 			else {
 				System.out.println("if you can't type a valid input, you can't have a baby");
 				m = new Move(Constants.STAYPUT);
@@ -128,14 +97,7 @@ public class HumanPlayer implements Player {
 		
 	}
 	
-	/**
-	 * Getter method for key. Exposing key so PlayerRoundData get access it
-	 * @return key
-	 */
-	//swap said methods in player should be private?? How else can 'getID' work?
-	public int getKey(){
-		return key;
-	}
+	
 	
 
 }

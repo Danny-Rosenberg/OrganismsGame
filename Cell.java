@@ -22,10 +22,7 @@ public class Cell {
 	private boolean covered; //leave for now
 	private int food; //number of food units
 	private boolean foodP; //presence of food
-//	private int xCo; //the coordinates of the cells on the board -- not sure about this
-//	private int yCo; //the coordinates of the cells on the boad -- not sure about this
 	private int status; //0 no food no player, 1 food, 2 player
-//	private HumanPlayer player; 
 	private Organism organism; //this will do the same thing as Player
 	
 	/**
@@ -144,6 +141,9 @@ public class Cell {
 	}
 	
 	public void setStatus(){
+		if (food > 0) {
+			foodP = true;
+		}
 		if (getOrganism() == null && foodP == false){
 			status = 0;
 		}

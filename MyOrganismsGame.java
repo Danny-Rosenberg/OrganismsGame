@@ -32,7 +32,7 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 	 */
 	@Override
 	public void initialize(GameConfig game, double p, double q, ArrayList<Player> players) {
-		setRound(5); //careful here, may not be the right place for this
+		setRound(10); //careful here, may not be the right place for this
 		this.p = p;
 		this.q = q;
 		this.game = game; //shouldn't this still work with MyGameConfig?
@@ -46,10 +46,13 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 			pro.register((MyGameConfig)game, i); //not sure this cast is what I want here
 			Organism org = new Organism(pro, 500, i, (MyGameConfig)game); //not sure this cast is what I want here
 			allOrgs.add(org);
-			MyPlayerRoundData myPRD = new MyPlayerRoundData();
-			myPRD.setPlayerId(i); //why make things more complicated 
-			myPRD.setEnergy(500); //how much food at the start?
-			myPRD.setCount(1);
+			MyPlayerRoundData myPRD = new MyPlayerRoundData(org, 500, 1, i);
+//			myPRD.setPlayerId(i); //why make things more complicated 
+//			myPRD.setEnergy(500); //how much food at the start?
+//			myPRD.setCount(1);
+			System.out.println("this player's id is " + myPRD.getPlayerId());
+			System.out.println("energy in myPRD is " + myPRD.getEnergy());
+			System.out.println("count is " + myPRD.getCount());
 //			PlayerRoundData prd = (PlayerRoundData) myPRD;
 			PRD.add(myPRD); //adding myPlayerRoundData types into a playerRoundData arraylist...could cause problems
 			i++;
@@ -99,8 +102,9 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 			for (y = 0; y < 10; y++){
 				for(x = 0; x < 10; x++){
 					currentCell = ph[x][y];
-					Organism org = currentCell.getOrganism(); //p is always getting null, why? Why does this work?
-					if(org != null){ //if there's a player in the cell
+					Organism org = currentCell.getOrganism(); 
+					if(org != null && org.isMoveFlag() == false){ //if there's a player in the cell, and hasn't moved yet
+						System.out.println("key check: " + org.getKey());
 						//eating
 						if(currentCell.isFoodP()){
 						org.eat();
@@ -145,25 +149,27 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 			  }
 			}
 			//A final iteration to update PlayerRoundData
-					int n = 0;
-					int m = 0;
+				int n = 0;
+				int m = 0;
 			  for (m = 0; m < 10; m++){
 				 for(n = 0; n < 10; n++){
-					Organism org = currentCell.getOrganism(); //Pointing to same place in memory? Should be humanplayer?
-					
-					if(org != null){
-						org.setMoveFlag(false); //resetting the movement flag
+				//	Organism org = currentCell.getOrganism(); //Pointing to same place in memory? Should be humanplayer?
+					 currentCell = ph[m][n];
+					if(currentCell.getOrganism() != null){
+						currentCell.getOrganism().setMoveFlag(false); //resetting the movement flag
 						currentCell.setCovered(true);
 						currentCell.setStatus(); //for printing purposes
-						updatePlayerRoundData(org); //back to normal x and y
+						updatePlayerRoundData(currentCell.getOrganism()); 
+						printResults();
+						resetPlayerRoundData();
 					}
 				    }	
 				   }
-//			  printBoard(board);
+			  printBoard(board);
 				round--;
 			   }	
 			  
-		printResults();
+//		printResults();
 		return true;
 				 }
 		
@@ -178,6 +184,7 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 	public void movePlayer(Board board, int x, int y, int direction){
 		Cell[][] ph = this.board.getBoard(); //is this 'this' necessary? to reduce method chaining
 		Organism org = ph[x][y].getOrganism(); //careful here with inheritance
+		org.setMoveFlag(true);
 		//stay put
 		if(direction == 0){
 			ph[x][y].getOrganism().setMoveFlag(true);
@@ -265,7 +272,7 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 	public void moveChild(Board board, int x, int y, int direction, Organism child){
 		Cell[][] ph = this.board.getBoard(); //to reduce method chaining
 //		Player c = ph[x][y].getPlayer(); //Not actually creating the baby here. Baby lonely. 
-		
+		child.setMoveFlag(true);
 		//move west
 		if(direction == 1){
 			if (organismBubble[1] == 1){
@@ -544,17 +551,33 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 		for(PlayerRoundData my : PRD){
 			if(my instanceof MyPlayerRoundData){
 				MyPlayerRoundData myPRD = (MyPlayerRoundData) my;
-			
 			if(id == myPRD.getPlayerId()){
 				myPRD.setCount(1); 
 				myPRD.setEnergy(org.getEnergyLeft()); 
-				System.out.println(org.getEnergyLeft());
 			}
 			}
-			//else, some kind of exception
+
 		}
 		
 	}
+	
+	/**
+	 * This method resets all player round data to create
+	 * a fresh slate for the next round
+	 * @param org an organism on this cell
+	 */
+	public void resetPlayerRoundData(){
+		for(PlayerRoundData my : PRD){
+			if(my instanceof MyPlayerRoundData){
+				MyPlayerRoundData myPRD = (MyPlayerRoundData) my;
+				myPRD.resetCount(); 
+				myPRD.resetEnergy(); 
+			}
+			}
+
+		}
+		
+	
 	
 //	/**
 //	 * This method iterates through the board at the end of a round to collect data on the players
@@ -588,8 +611,8 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 			if (res instanceof MyPlayerRoundData){
 				MyPlayerRoundData myPRD = (MyPlayerRoundData) res;
 			System.out.println("for player number: " + myPRD.getPlayerId());
-			System.out.println(myPRD.getCount());
-			System.out.println(myPRD.getEnergy());
+			System.out.println("The count of this player was " + myPRD.getCount());
+			System.out.println("The total energy remaining of this player was " + myPRD.getEnergy());
 			}
 		}
 	}

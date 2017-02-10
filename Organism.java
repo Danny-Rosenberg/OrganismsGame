@@ -48,7 +48,6 @@ public class Organism {
 	 * Getter method for key. Exposing key so PlayerRoundData get access it
 	 * @return key
 	 */
-	//swap said methods in player should be private?? How else can 'getID' work?
 	public int getKey(){
 		return key;
 	}

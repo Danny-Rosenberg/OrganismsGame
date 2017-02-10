@@ -13,7 +13,14 @@ public class MyPlayerRoundData implements PlayerRoundData {
 	private int playerId; //could make these public
 	private int energy;
 	private int count;
-	private Player player;
+	private Organism org;
+	
+	public MyPlayerRoundData(Organism org, int energy, int count, int playerId){
+		this.setOrg(org);
+		this.energy = energy;
+		this.count = count;
+		this.playerId = playerId;
+	}
 	
 
 	/**
@@ -37,8 +44,7 @@ public class MyPlayerRoundData implements PlayerRoundData {
 	 */
 	@Override
 	public int getEnergy() {
-		// TODO Auto-generated method stub
-		return 0;
+		return energy;
 	}
 	
 	/**
@@ -54,8 +60,7 @@ public class MyPlayerRoundData implements PlayerRoundData {
 	 */
 	@Override
 	public int getCount() {
-		// TODO Auto-generated method stub
-		return 0;
+		return count;
 	}
 	
 	/**
@@ -65,6 +70,29 @@ public class MyPlayerRoundData implements PlayerRoundData {
 	public void setCount(int countChange){
 		count += countChange;
 	}
+
+
+	public Organism getOrg() {
+		return org;
+	}
+
+
+	public void setOrg(Organism org) {
+		this.org = org;
+	}
 	
+	/**
+	 * setting energy back to zero after a round finishes - clean slate
+	 */
+	public void resetEnergy(){
+		energy = 0;
+	}
+	
+	/**
+	 * Setting count back to zero after a round finishes - clean slate
+	 */
+	public void resetCount(){
+		count = 0;
+	}
 
 }

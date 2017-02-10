@@ -32,7 +32,7 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 	 */
 	@Override
 	public void initialize(GameConfig game, double p, double q, ArrayList<Player> players) {
-		setRound(5000); //careful here, may not be the right place for this
+		setRound(5); //careful here, may not be the right place for this
 		this.p = p;
 		this.q = q;
 		this.game = game; //shouldn't this still work with MyGameConfig?
@@ -65,7 +65,7 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 	 */
 	@Override
 	public boolean playGame() { //perhaps put methods in here that will throw excp...Or maybe in Move class
-		int rounds = 5;
+//		int rounds = 5000;
 		int x = 0; //going through rows
 		int y = 0; //going through columns
 		Cell[][] ph = board.getBoard(); //does this 'this' matter here? Ultimately just want one board
@@ -86,7 +86,7 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 			}
 
 		
-		while(rounds > 0){
+		while(round > 0){
 			//creating a single round
 			//laying down the food for a round
 			for (x = 0; x < 10; x++){
@@ -110,35 +110,34 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 							//checking for a pulse...
 							if(org.getEnergyLeft() == 0){ 
 								currentCell.setOrganism(null);//remove the corpse
+								currentCell.setCovered(false); //shouldn't be necessary, but to make sure
 							}
-							spaceCheck(board, y, x); //just switched -- what's up with the directions? 
-							Move move = currentCell.getOrganism().getPlayer().move(foodBubble, organismBubble, currentCell.getFood(), 
-									currentCell.getOrganism().getEnergyLeft()); //@TODO null pointer when player found
-							//if there are no babies
-							if(move.childpos == 0){
-								  if(move.type == 0){
-									currentCell.getOrganism().setEnergyLeft(-1); //energy for not moving
-								  }
-							currentCell.getOrganism().setEnergyLeft( -MGC.v()); //energy taken even if you make a mistake	
-							movePlayer(board, x, y, move.type()); 
-							} 
-							//There's a baby coming! where to put him?
 							else{
-								currentCell.getOrganism().setEnergyLeft(-MGC.v()); //subtracting energy 
-								currentCell.getOrganism().setEnergyLeft(currentCell.getOrganism().getEnergyLeft() / 2);//pregancy is expensive
-								try{
-								Organism child = currentCell.getOrganism().getClass().newInstance(); //or HumanPlayer?
-									child.setEnergyLeft(currentCell.getOrganism().getEnergyLeft());
-									child.setPlayer(org.getPlayer()); //setting the organism's player
-									child.getPlayer().register(game, currentCell.getOrganism().getKey());
-									moveChild(board, x, y, move.childpos(), child);
-								}						
-								
-								catch(Exception e){
-									System.out.println("problem creating new instance"); System.exit(0);
+								spaceCheck(board, x, y); //just switched -- what's up with the directions? 
+								Move move = currentCell.getOrganism().getPlayer().move(foodBubble, 
+										organismBubble, 
+										currentCell.getFood(), 
+										currentCell.getOrganism().getEnergyLeft()); 
+								//if there are no babies
+								if(move.childpos == 0){
+									  if(move.type == 0){
+										currentCell.getOrganism().setEnergyLeft(-1); //energy for not moving
+									  }
+								currentCell.getOrganism().setEnergyLeft( -MGC.v()); //energy taken even if you make a mistake	
+								movePlayer(board, x, y, move.type()); 
+								} 
+								//There's a baby coming! where to put him?
+								else{
+									currentCell.getOrganism().setEnergyLeft(-MGC.v()); //subtracting energy 
+									currentCell.getOrganism().setEnergyLeft(-(currentCell.getOrganism().getEnergyLeft() / 2));//pregancy is expensive
+	//								
+									Organism child = new Organism(org.getPlayer(), currentCell.getOrganism().getEnergyLeft(), 
+											currentCell.getOrganism().getKey(), (MyGameConfig)game);
+										moveChild(board, x, y, move.childpos(), child);
+	
 								}
+								resetBubbles(); //setting all bubbles to default 
 							}
-							resetBubbles(); //setting all bubbles to default 
 						}						
 					
 				}
@@ -156,12 +155,12 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 						org.setMoveFlag(false); //resetting the movement flag
 						currentCell.setCovered(true);
 						currentCell.setStatus(); //for printing purposes
-						updatePlayerRoundData(board, n, m);
+						updatePlayerRoundData(org); //back to normal x and y
 					}
 				    }	
 				   }
-			  printBoard(board);
-				rounds--;
+//			  printBoard(board);
+				round--;
 			   }	
 			  
 		printResults();
@@ -350,7 +349,7 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 	/**
 	 * @param playerBubble the playerBubble to set
 	 */
-	public void setPlayerBubble(int index, int status) {
+	public void setOrganismBubble(int index, int status) {
 		organismBubble[index] = status;
 	}
 
@@ -383,10 +382,11 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 		Cell[][] ph = board.getBoard(); //@TODO ask about this - adding 'this' stopped infinite loop, but no printing
 		for (i = 0; i < 10; i++){
 			for (j = 0; j < 10; j++){
-				System.out.printf("%d", ph[i][j].getStatus()); //".status"
+				System.out.printf(" %d ", ph[i][j].getStatus()); 
 			}
 			System.out.println();
 		}
+		System.out.println();
 	}
 	
 	
@@ -398,21 +398,21 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 	 * 
 	 */
 	public void spaceCheck(Board board, int x, int y){ //-1 if no organism is present, 1 is they are present
-		//is this wrapping around corners properly? probably not
+		//my board wraps directly around ie. 9,9 going east wraps to (0,9), not (0, 0)
 		Cell[][] ph = this.board.getBoard(); //just to shorten the method chaining
 		if(ph[x][y].isFoodP()){ //checking current space
 			setFoodBubble(0, true);} //really there should be a third option
-		setPlayerBubble(0, 1);
+		setOrganismBubble(0, 1); 
 		//check west
-		if(x == 0 && y == 0){ //check if it's on the upperwest side
-			if (ph[9][9].getOrganism() != null){
-				setFoodBubble(1, false);
-				setPlayerBubble(1, 1);
-			}
-		}
+//		if(x == 0 && y == 0){ //check if it's on the upperwest side
+//			if (ph[9][9].getOrganism() != null){
+//				setFoodBubble(1, false);
+//				setOrganismBubble(1, 1);
+//			}
+//		}
 		if(x == 0){ //
 			if(ph[9][y].getOrganism() != null) 
-				setPlayerBubble(1, 1);
+				setOrganismBubble(1, 1);
 			else{
 				if(ph[9][y].isFoodP()){
 					setFoodBubble(1, true);
@@ -421,11 +421,11 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 		}
 		else{
 		if(ph[x-1][y].getOrganism() != null){
-			setPlayerBubble(1, 1);
+			setOrganismBubble(1, 1);
 		}
 		
 		else{
-			setPlayerBubble(1, -1);
+			setOrganismBubble(1, -1);
 		   if(ph[x-1][y].isFoodP()){
 			  setFoodBubble(1, true);
 		    }
@@ -433,18 +433,19 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 		}
 		//check east
 		//check lower east side
-		if(x == 9 && y == 9){
-			if(ph[0][0].getOrganism() != null){
-				setPlayerBubble(2, 1);
-			}
-			else{
-				if(ph[0][0].isFoodP()){
-					setFoodBubble(2, true);
-				}
-			}
+//		if(x == 9 && y == 9){
+//			if(ph[0][0].getOrganism() != null){
+//				setOrganismBubble(2, 1);
+//			}
+//			else{
+//				if(ph[0][0].isFoodP()){
+//					setFoodBubble(2, true);
+//				}
+//			}
+//		}	
 		if(x == 9){ //checking east side wall
 			if(ph[0][y].getOrganism() != null){
-				setPlayerBubble(2, 1);
+				setOrganismBubble(2, 1);
 			}
 			else{
 				if(ph[0][y].isFoodP()){
@@ -453,19 +454,20 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 			}
 		}
 		
-		if(ph[x+1][y].getOrganism() != null){
-			setPlayerBubble(2, 1);
-			
-		}
-		else{
-			if (ph[x+1][y].isFoodP()){
-				setFoodBubble(2, true);
+		else {
+			if (ph[x+1][y].getOrganism() != null){ //out of bounds '10'
+			setOrganismBubble(2, 1);
 			}
-		}
+			else {
+				if (ph[x+1][y].isFoodP()){
+				setFoodBubble(2, true);
+				}
+			}
+		}	
 		//check north
 		if(y == 0){
 			if(ph[x][9].getOrganism() != null){
-				setPlayerBubble(3, 1);
+				setOrganismBubble(3, 1);
 			}
 			else{
 				if (ph[x][9].isFoodP()){
@@ -473,19 +475,21 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 				}
 			}
 		}
-		if(ph[x][y+1].getOrganism() != null){
-			setPlayerBubble(3, 1);
-			
-		}
 		else{
-			if (ph[x][y+1].isFoodP()){
-				setFoodBubble(3, true);
+			if(ph[x][y-1].getOrganism() != null){ //out of bounds 10
+				setOrganismBubble(3, 1);
+			
+			}
+			else{
+				if (ph[x][y-1].isFoodP()){
+					setFoodBubble(3, true);
+				}
 			}
 		}
 		//check south
 		if(y == 9){
 			if(ph[x][0].getOrganism() != null){
-				setPlayerBubble(4, 1);
+				setOrganismBubble(4, 1);
 			}
 			else{
 				if(ph[x][0].isFoodP()){
@@ -493,18 +497,18 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 				}
 			}
 		}
-		if(ph[x][y-1].getOrganism() != null){
-			setPlayerBubble(4, 1);
-			
-		}
 		else{
-			if (ph[x][y-1].isFoodP()){
-				setFoodBubble(4, true);
+			if(ph[x][y+1].getOrganism() != null){ 
+					setOrganismBubble(4, 1);
 			}
+			else{
+				if (ph[x][y+1].isFoodP()){
+					setFoodBubble(4, true);
+					}
+				}
 		}
 	}
 		
-	}
 	
 	/**
 	 * This method will set both bubble arrays back to default values
@@ -529,43 +533,66 @@ public class MyOrganismsGame implements OrganismsGameInterface {
 		return PRD;
 	}
 	
+	
 	/**
-	 * This method iterates through the board at the end of a round to collect data on the players
-	 * @param board
-	 * @param x coordinate
-	 * @param y coordinate
+	 * This method takes an organism, and updates the relevant
+	 * player round data
+	 * @param org an organism on this cell
 	 */
-	public void updatePlayerRoundData(Board board, int x, int y){ //this is for a single cell!!!!!
-		Cell[][] ph = board.getBoard();
-		Organism org = ph[x][y].getOrganism();
-			int id = org.getKey();
-			for(PlayerRoundData my : PRD){
-				if(my instanceof MyPlayerRoundData){
-					MyPlayerRoundData myPRD = (MyPlayerRoundData) my;
-				
-				if(id == myPRD.getPlayerId()){
-					myPRD.setCount(1); //Inheritance!
-					myPRD.setEnergy(org.getEnergyLeft()); //Inheritance!
-				}
-				}
-				//else, some kind of exception
+	public void updatePlayerRoundData(Organism org){
+		int id = org.getKey();
+		for(PlayerRoundData my : PRD){
+			if(my instanceof MyPlayerRoundData){
+				MyPlayerRoundData myPRD = (MyPlayerRoundData) my;
+			
+			if(id == myPRD.getPlayerId()){
+				myPRD.setCount(1); 
+				myPRD.setEnergy(org.getEnergyLeft()); 
+				System.out.println(org.getEnergyLeft());
 			}
+			}
+			//else, some kind of exception
 		}
+		
+	}
+	
+//	/**
+//	 * This method iterates through the board at the end of a round to collect data on the players
+//	 * @param board
+//	 * @param x coordinate
+//	 * @param y coordinate
+//	 */
+//	public void updatePlayerRoundData(Board board, int x, int y){ //this is for a single cell!!!!!
+//		Cell[][] ph = board.getBoard();
+//		Organism org = ph[x][y].getOrganism();
+//			int id = org.getKey(); //null pointer, how could an org not have a key?
+//			for(PlayerRoundData my : PRD){
+//				if(my instanceof MyPlayerRoundData){
+//					MyPlayerRoundData myPRD = (MyPlayerRoundData) my;
+//				
+//				if(id == myPRD.getPlayerId()){
+//					myPRD.setCount(1); //Inheritance!
+//					myPRD.setEnergy(org.getEnergyLeft()); //Inheritance!
+//				}
+//				}
+//				//else, some kind of exception
+//			}
+//		}
 
 	
 	/**
 	 * A method for printing the data in player round data. A final scorecard for the game
 	 */
 	public void printResults(){
-		for(PlayerRoundData myPRD : PRD){
-//			if (res instanceof MyPlayerRoundData){
-//				MyPlayerRoundData myPRD = (MyPlayerRoundData) res;
+		for(PlayerRoundData res : PRD){
+			if (res instanceof MyPlayerRoundData){
+				MyPlayerRoundData myPRD = (MyPlayerRoundData) res;
 			System.out.println("for player number: " + myPRD.getPlayerId());
 			System.out.println(myPRD.getCount());
 			System.out.println(myPRD.getEnergy());
 			}
 		}
-	
+	}
 	
 	public ArrayList<Player> getPlayers(){
 		return players;

@@ -10,11 +10,13 @@ public class Main {
 //move all those methods into the wrapper class
 	public static void main(String[] args) {
 		MyGameConfig mgc = new MyGameConfig();
-		HumanPlayer Danny = new HumanPlayer();
-		HumanPlayer Banana = new HumanPlayer();
+//		HumanPlayer Danny = new HumanPlayer();
+		RandomPlayer Banana = new RandomPlayer();
+		ComputerPlayer compy = new ComputerPlayer();
 		ArrayList<Player> players = new ArrayList<Player>();
-		players.add(Danny);
+//		players.add(Danny);
 		players.add(Banana);
+		players.add(compy);
 		MyOrganismsGame myORG = new MyOrganismsGame();
 		myORG.initialize(mgc, .009, .02, players);
 
